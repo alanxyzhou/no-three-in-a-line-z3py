@@ -322,7 +322,7 @@ def naive(N):
 
 
 def main(N):
-    """TODO
+    """Solves the no-three-in-a-line problem for 2 up to N and writes the results to solutions.txt.
 
     Args:
         N: the dimensions (number of rows and columns) of the grid.
@@ -349,7 +349,7 @@ def main(N):
             grid = construct_grid_from_model(n, s)
             f.write(grid.as_string())
             f.write("\n")
-        f.write("t=" + str(t) + " seconds\n\n")
+        f.write("N=" + str(n) + ", t=" + str(t) + "s\n\n")
         f.flush()  # write solutions live
 
     f.close()
