@@ -38,17 +38,33 @@ class Grid:
                         self.grid[row][col] = True
 
     def points(self):
-        """Returns a list of (x,y) tuples representing the coordinates of
-        filled points on the grid
+        """
+        Returns a list of (x,y) tuples representing the coordinates of filled points on the grid.
+        (0,0) is the bottom-left corner of the grid.
         """
         return [
-            (row, col)
-            for row in range(self.N)
+            (col, row)
             for col in range(self.N)
+            for row in range(self.N)
             if self.grid[row][col]
         ]
 
+    def columns(self):
+        """
+        Returns a column-wise list of the points in each column.
+        grid.columns()[c] lists all the points for x = c.
+        Point (0, 0) is the bottom left corner.
+        """
+        return [
+            [(col, row) for row in range(self.N) if self.grid[row][col]]
+            for col in range(self.N)
+        ]
+
     def print(self):
+        """
+        Prints the grid, with +y direction up and +x direction right.
+        Point (0, 0) is the bottom left corner.
+        """
         stack = []
         for row in range(self.N):
             line = ""
@@ -74,84 +90,8 @@ def construct_grid_from_model(N, solver):
             grid_string_list[yval * N + xval] = "1"
         return Grid(N, "".join(grid_string_list))
     else:
-        print("solver returned unsat")
+        print("solver returned unsat, cannot create grid")
         return None
-
-
-def create_real_assertions(N):
-    """
-    Creates assertions that for 2*N points, no two points share an identical line equation.
-    This accounts for Case 2 in the overall assertions and must be OR'd with Case 1 and Case 3.
-    """
-    real_assertions = []
-    point_tuples = []
-    # create (2N choose 2) pairs of slopes between points i and j
-    for i in range(2 * N - 1):
-        for j in range(i + 1, 2 * N):
-            point_tuples.append((i, j))
-    # create assertions that for each unique combination of lines created by two points,
-    # they are both real and differ in either slope or offset
-    for point_pair in combinations(point_tuples, 2):
-        ij = point_pair[0]
-        uv = point_pair[1]
-
-        m_ij = Int("m_{0}_{1}".format(ij[0], ij[1]))
-        b_ij = Int("b_{0}_{1}".format(ij[0], ij[1]))
-        x_i = Int("x_{0}".format(ij[0]))
-        x_j = Int("x_{0}".format(ij[1]))
-
-        m_uv = Int("m_{0}_{1}".format(uv[0], uv[1]))
-        b_uv = Int("b_{0}_{1}".format(uv[0], uv[1]))
-        x_u = Int("x_{0}".format(uv[0]))
-        x_v = Int("x_{0}".format(uv[1]))
-
-        real_assertions.append(
-            And(
-                And(x_i != x_j, x_u != x_v),  # both slopes are not infinite
-                Or(m_ij != m_uv, b_ij != b_uv),  # both lines differ in slope or offset
-            )
-        )
-
-    real_assertions_conjunct = And(real_assertions)
-
-    print(real_assertions_conjunct)
-    return real_assertions_conjunct
-
-
-def create_one_real_one_inf_assertions(N):
-    """
-    Creates assertions that for 2*N points, for any combination of slopes created by the two points,
-    where one slope is real and the other is infinite, the lines are distinct so they must be allowed.
-    This accounts for Case 3 in the overall assertions and must be OR'd with Case 1 and Case 2.
-    """
-    one_real_one_inf_assertions = []
-    point_tuples = []
-    # create (2N choose 2) pairs of slopes between points i and j
-    for i in range(2 * N - 1):
-        for j in range(i + 1, 2 * N):
-            point_tuples.append((i, j))
-    # create assertions that for each unique combination of lines created by two points,
-    # one is real and the other is infinite.
-    for point_pair in combinations(point_tuples, 2):
-        ij = point_pair[0]
-        uv = point_pair[1]
-
-        m_ij = Int("m_{0}_{1}".format(ij[0], ij[1]))
-        b_ij = Int("b_{0}_{1}".format(ij[0], ij[1]))
-        x_i = Int("x_{0}".format(ij[0]))
-        x_j = Int("x_{0}".format(ij[1]))
-
-        m_uv = Int("m_{0}_{1}".format(uv[0], uv[1]))
-        b_uv = Int("b_{0}_{1}".format(uv[0], uv[1]))
-        x_u = Int("x_{0}".format(uv[0]))
-        x_v = Int("x_{0}".format(uv[1]))
-
-        one_real_one_inf_assertions.append(
-            Or(And(x_i == x_j, x_u != x_v), And(x_i != x_j, x_u == x_v))
-        )
-
-    one_real_one_inf_conjunct = And(one_real_one_inf_assertions)
-    return one_real_one_inf_conjunct
 
 
 def three_solve(N):
@@ -183,188 +123,64 @@ def three_solve(N):
                 distinct_points_assertations.append(Or(x_i != x_j, y_i != y_j))
         solver.add(And(distinct_points_assertations))
 
-    # create (2*N choose 2) lines between the 2n points
-    points_2combinations = []
-    for i in range((2 * N) - 1):
-        for j in range(i + 1, (2 * N)):
-            # tuple represents the lines between two points. (e.g. (p1, p2) means the line between p1 and p2)
-            # i, j represent the indices of the points created above (e.g., point i == (x_i, y_i))
-            tup = (i, j)
-            points_2combinations.append(tup)
+    # create (2*N choose 3) combinations of points
+    points_indices = []
+    for i in range(0, 2 * N - 2):
+        for j in range(i + 1, 2 * N - 1):
+            for k in range(j + 1, 2 * N):
+                if i != j and j != k and k != i:
+                    tup = (i, j, k)
+                    points_indices.append(tup)
 
-    print(points_2combinations)
-
-    # create ((2*N choose 2) choose 3) combinations of lines from the set created above
-    lines_3combinations = []
-    for i in range(0, len(points_2combinations) - 2):
-        for j in range(i + 1, len(points_2combinations) - 1):
-            for k in range(j + 1, len(points_2combinations)):
-                # tuple represents the indices of the lines between any two points.
-                # (e.g. (i,j,k) represents the ith, jth, kth lines from the set created above)
-                tup = (i, j, k)
-                lines_3combinations.append(tup)
-
-    print(lines_3combinations)
-
-    # for each set of 3 combinations of lines, create 3 assertions that the lengths of two lines do not sum to the length of the third
-    for triplet_index in range(len(lines_3combinations)):
-        triplet = lines_3combinations[triplet_index]
-        print("debug line index", triplet[0], triplet[1], triplet[2])
-        # first line in triplet of lines
-        l1 = triplet[0]
-        l1_p1 = points_2combinations[l1][0]  # point (x_{l1_p1}, y_{l1_p1})
-        l1_p2 = points_2combinations[l1][1]  # point (x_{l1_p2}, y_{l1_p2})
-        # second line
-        l2 = triplet[1]
-        l2_p1 = points_2combinations[l2][0]
-        l2_p2 = points_2combinations[l2][1]
-        # third line
-        l3 = triplet[2]
-        l3_p1 = points_2combinations[l3][0]
-        l3_p2 = points_2combinations[l3][1]
-
-        # x and y coordinates of points in l1
-        # point (x_{l1_p1}, y_{l1_p1})
-        l1_p1_x = Int("x_{0}".format(l1_p1))
-        l1_p1_y = Int("y_{0}".format(l1_p1))
-        # point (x_{l1_p2}, y_{l1_p2})
-        l1_p2_x = Int("x_{0}".format(l1_p2))
-        l1_p2_y = Int("y_{0}".format(l1_p2))
-
-        # x and y coordinates of points in l2
-        # point (x_{l1_p1}, y_{l1_p1})
-        l2_p1_x = Int("x_{0}".format(l2_p1))
-        l2_p1_y = Int("y_{0}".format(l2_p1))
-        # point (x_{l1_p2}, y_{l1_p2})
-        l2_p2_x = Int("x_{0}".format(l2_p2))
-        l2_p2_y = Int("y_{0}".format(l2_p2))
-
-        # x and y coordinates of points in l3
-        # point (x_{l1_p1}, y_{l1_p1})
-        l3_p1_x = Int("x_{0}".format(l3_p1))
-        l3_p1_y = Int("y_{0}".format(l3_p1))
-        # point (x_{l1_p2}, y_{l1_p2})
-        l3_p2_x = Int("x_{0}".format(l3_p2))
-        l3_p2_y = Int("y_{0}".format(l3_p2))
-
-        """
-        print("indices: -------------")
-        print(l1_p1, l1_p2)
-        print(l2_p1, l2_p2)
-        print(l3_p1, l3_p2)
-        print("points: --------------")
-        print(l1_p1_x, l1_p1_y)
-        print(l1_p2_x, l1_p2_y)
-        print(l2_p1_x, l2_p1_y)
-        print(l2_p2_x, l2_p2_y)
-        print(l3_p1_x, l3_p1_y)
-        print(l3_p2_x, l3_p2_y)
-        print("----------------------")
-        """
-
-        # add distances between 2 points [(x_a, y_a), (x_b, y_b)]
-        # given by sqrt((x_b - x_a)^2, (y_b - y_a)^2)
-        len_l1 = Real("trip{0}_len1_p{1}_p{2}".format(triplet_index, l1_p1, l1_p2))
-        len_l2 = Real("trip{0}_len2_p{1}_p{2}".format(triplet_index, l2_p1, l2_p2))
-        len_l3 = Real("trip{0}_len3_p{1}_p{2}".format(triplet_index, l3_p1, l3_p2))
+    # for each triplet, assert that the area created by the triangle is not 0
+    # an area of a triangle is 0 iff the three points are colinear
+    # an area of a triangle is given by:
+    #                                 [ [ 1,  1,  1],
+    #  A(p1, p2, p3) = 1/2 * Abs(Det(   [x1, x2, x3],  ))
+    #                                   [y1, y2, y3] ]
+    # (See derivation here https://people.richland.edu/james/lecture/m116/matrices/area.html)
+    # so to assert that no three points are colinear, just assert that the det is not 0
+    # equivalently: https://en.wikipedia.org/wiki/Shoelace_formula
+    for triplet in points_indices:
+        p1 = triplet[0]
+        p2 = triplet[1]
+        p3 = triplet[2]
+        x1 = Int("x_{0}".format(p1))
+        y1 = Int("y_{0}".format(p1))
+        x2 = Int("x_{0}".format(p2))
+        y2 = Int("y_{0}".format(p2))
+        x3 = Int("x_{0}".format(p3))
+        y3 = Int("y_{0}".format(p3))
+        # apologies for the strange formatting, don't know how to tell black formatter to not do this
         solver.add(
-            len_l1 == Sqrt(((l1_p2_x - l1_p1_x) ** 2) + ((l1_p2_y - l1_p1_y) ** 2))
-        )
-        solver.add(
-            len_l2 == Sqrt(((l2_p2_x - l2_p1_x) ** 2) + ((l2_p2_y - l2_p1_y) ** 2))
-        )
-        solver.add(
-            len_l3 == Sqrt(((l3_p2_x - l3_p1_x) ** 2) + ((l3_p2_y - l3_p1_y) ** 2))
+            0
+            != (
+                ((x2 * y3) - (x3 * y2))
+                - ((x1 * y3) - (x3 * y1))
+                + ((x1 * y2) - (x2 * y1))
+            )
         )
 
-        # add assertations for this triplet of lines such that
-        # for any 2 lines, the sum of their lengths do not equal the length of the 3rd line
-        solver.add(len_l1 + len_l2 != len_l3)
-        # solver.add(len_l2 + len_l3 != len_l1)
-        # solver.add(len_l3 + len_l1 != len_l2)
-
-    print(len(points_2combinations), len(lines_3combinations))  # sanity check
-
-    # create ((2*N choose 2) permute 3) constraints that say no two lines can equal the sum of the third
-
-    """
-    # assert that the line formed by every point is unique
-    In z3, dividing by 0 returns 0. This is a big problem because a 0 slope is indistinguishable from an infinite slope. 
-
-    Therefore, when comparing slopes for uniqueness, we must split this into multiple conditions, and we want ANY of these three to pass:
-    1. This slope is infinite (x_i == x_j):
-        - check that there are no more than 2 points with this x coord
-            This can be done by transposing the grid and applying the uniqueness rule, ignoring vertical lines (which were horizontal)
-    2. This slope is real, and the other slope is real (x_i != x_j and x_u != x_v):
-        - check that this line is not an exact match with the other line
-            i.e., m_ij != m_uv || b_ij != b_uv
-    3. This slope is real, and the other slope is infinite (x_i != x_j and x_u == x_v) or (x_i == x_j and x_u != x_v):
-        - the slopes are unique by definition. No additional work to be done
-
-    distinct_lines_assertations = []
-    
-    for i in range((2 * N) - 1):
-        for j in range(i + 1, (2 * N)):
-            any_of_three_cases_assertations = []
-
-            # _ij is "this" line
-            m_ij = Int("m_{0}{1}".format(i, j))
-            b_ij = Int("b_{0}{1}".format(i, j))
-            # x points for "this" line
-            x_i = Int("x_{0}".format(i))
-            x_j = Int("x_{0}".format(j))
-
-            # Case 1: Assert that if this slope is infinite, there are no more than 2 points on this x axis
-            # TODO 
-            # any_of_three_cases_assertations.append(...)
-
-            # compare this line and slope against every other line and slope
-            for u in range((2 * N) - 1):
-                for v in range(i + 1, (2 * N)):
-                    if i != u or j != v:
-                        # _uv is "other" line, compare against "this" line _ij
-                        m_uv = Int("m_{0}{1}".format(u, v))
-                        b_uv = Int("b_{0}{1}".format(u, v))
-                        # x points for "other" line
-                        x_u = Int("x_{0}".format(u))
-                        x_v = Int("x_{0}".format(v))
-
-                        # Case 2
-                        both_slopes_real_assertations = And(
-                            And(x_i != x_j, x_u != x_v), Or(m_ij != m_uv, b_ij != b_uv)
-                        )
-                        any_of_three_cases_assertations.append(
-                            both_slopes_real_assertations
-                        )
-                        # Case 3
-                        one_slope_real_other_infinite = Or(
-                            And(x_i != x_j, x_u == x_v), And(x_i == x_j, x_u != x_v)
-                        )
-                        any_of_three_cases_assertations.append(
-                            one_slope_real_other_infinite
-                        )
-
-            distinct_lines_assertations.append(Or(any_of_three_cases_assertations))
-
-    solver.add(And(distinct_lines_assertations))
-    """
-
-    # test
-    print("----------------------------------------")
-    print(solver.assertions())
+    # print(solver.assertions())
     if solver.check() == sat:
-        print(solver.model())
+        # print(solver.model())
+        g = construct_grid_from_model(N, solver)
+        g.print()
+        return g
     else:
-        print("unsat")
-    g = construct_grid_from_model(N, solver)
-    g.print()
-
-    return False
+        print("unsat for N=" + N)
+        return None
 
 
 def is_valid(grid):
+    # make sure no more than 2 points are in each vertical column
+    for column in grid.columns():
+        if len(column) > 2:
+            print("GRID IS INVALID - 3 COLINEAR POINTS DETECTED")
+            return False
+
+    # every 2 points should form a unique line equation (not counting vertical lines)
     lines = {None}
-    # every 2 points should form a unique line equation
     for points_tuple in combinations(grid.points(), 2):
         p1 = points_tuple[0]
         p2 = points_tuple[1]
@@ -374,7 +190,8 @@ def is_valid(grid):
         delta_x = p2[0] - p1[0]
 
         if delta_x == 0:
-            m = math.inf
+            # skip all vertical lines since their slopes are undefined
+            continue
         else:
             m = delta_y / delta_x
 
@@ -382,12 +199,12 @@ def is_valid(grid):
 
         line = (m, b)
         if line in lines:
-            print("line", line, "duplicated: invalid grid")  # debug
+            print("GRID IS INVALID - 3 COLINEAR POINTS DETECTED")
             return False
         else:
-            print("line", line, "ok")  # debug
             lines.add(line)
 
+    print("GRID IS VALID - NO THREE POINTS COLINEAR")
     return True
 
 
@@ -402,18 +219,8 @@ def naive(N):
 
 
 def main(N):
-    """
-    # test1 = Grid(3, "100110010")
-    test1 = Grid(3, "100110011")
-    test1.print()
-
-    for points_tuple in combinations(test1.points(), 2):
-        print(points_tuple)
-
-    print("is valid:", is_valid(test1))
-    """
-    three_solve(N)
-    # create_real_assertions(N)
+    grid = three_solve(N)
+    is_valid(grid)
 
 
 if __name__ == "__main__":
