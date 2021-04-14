@@ -11,17 +11,20 @@ class Grid:
 
         Args:
             N: the dimensions (number of rows and columns) of the grid.
-            instance: an optional string from which the grid should fill in points. The string
-                should have N^2 binary digits, where "0" indicates no point and "1" indicates a
-                point at that coordinate. The grid is built "upwards" row by row.
+            instance: an optional string from which the grid should fill in
+                points. The string should have N^2 binary digits, where "0"
+                indicates no point and "1" indicates a point at that coordinate.
+                The grid is built "upwards" row by row.
 
-                Example: Grid(2, "0111") constucts a grid with points (0, 1), (1, 0), and (1, 1).
+                Example: Grid(2, "0111") constucts a grid with points
+                (0, 1), (1, 0), and (1, 1).
 
         Returns:
             A grid object.
 
         Raises:
-            ValueError: a syntax errror prevented the grid from being constructed by the instance.
+            ValueError: a syntax errror prevented the grid from being
+            constructed by the instance.
         """
         self.N = N
         self.grid = [[False for col in range(N)] for row in range(N)]
@@ -51,7 +54,8 @@ class Grid:
         (0,0) is the bottom-left corner of the grid.
 
         Returns:
-            A list of (x,y) tuples representing the coordinates of filled points on the grid.
+            A list of (x,y) tuples representing the coordinates of filled points
+            on the grid.
 
             Example: A grid which looks like
                 01
@@ -68,9 +72,9 @@ class Grid:
     def columns(self):
         """Gets a 2D list of the points in each column.
 
-        A list of lists holding the coordinate tuples for points in each column. If there are no
-        points in the column, then that list will be empty. The nth list in the 2D list contains all
-        the points in the grid where x = n.
+        A list of lists holding the coordinate tuples for points in each column.
+        If there are no points in the column, then that list will be empty. The
+        nth list in the 2D list contains all the points in the grid where x = n.
 
         Point (0, 0) is the bottom left corner.
 
@@ -78,10 +82,10 @@ class Grid:
             A 2D list.
 
             Example: A grid which looks like
-                011
+                010
                 001
                 011
-                returns the list [[], [(1, 0), (1, 2)], [(2, 0), (2, 1), (2, 2)]]
+                returns the list [[], [(1, 0), (1, 2)], [(2, 0), (2, 1)]]
         """
         return [
             [(col, row) for row in range(self.N) if self.grid[row][col]]
@@ -91,9 +95,10 @@ class Grid:
     def as_string(self):
         """Returns an ASCII string representation of the grid.
 
-        A "1" indicates a point; "0" indicates the lack of a point. The grid is displayed with the
-        origin (0, 0) at the bottom left corner, with the positive y direction going upwards and the
-        positive x direction going right.
+        A "1" indicates a point; "0" indicates the lack of a point. The grid is
+        displayed with the origin (0, 0) at the bottom left corner, with the
+        positive y direction going upwards and the positive x direction going
+        right.
 
         Returns:
             A string representation of the grid.
@@ -119,7 +124,8 @@ def construct_grid_from_model(N, solver):
         solver: the z3 solver.
 
     Returns:
-        A grid if the constraints are satisfiable, or None if the constraints are unsatisfiable.
+        A grid if the constraints are satisfiable, or None if the constraints
+        are unsatisfiable.
     """
     if solver.check() == sat:
         m = solver.model()
@@ -140,26 +146,28 @@ def construct_grid_from_model(N, solver):
 def z3_nothree_solve(N):
     """Uses z3 smt to solve for a no-three-in-a-line grid.
 
-    Uses a z3 solver to construct a grid under the constraint(s) that no three points are colinear.
-    Because it is known for N <= 46 that there are solutions which place the maximum of 2*N points
-    on the grid (https://oeis.org/A000769), this function is guaranteed to return a grid with 2*N
-    points so long as N <= 46, and in fact assumes that 2*N points can indeed be placed such that no
-    three points are colinear.
+    Uses a z3 solver to construct a grid under the constraint(s) that no three
+    points are colinear. Because it is known for N <= 46 that there are
+    solutions which place the maximum of 2*N points on the grid
+    (https://oeis.org/A000769), this function is guaranteed to return a grid
+    with 2*N points so long as N <= 46, and in fact assumes that 2*N points can
+    indeed be placed such that no three points are colinear.
 
-    There are two main sets of constraints: The first set trivially asserts that there must be 2*N
-    unique points which fall within the bounds of the grid.
+    There are two main sets of constraints: The first set trivially asserts that
+    there must be 2*N unique points which fall within the bounds of the grid.
 
-    The second set of constraints asserts that no three points are colinear by calculating the area
-    formed by the triangles of every combination of points in the grid. Since three colinear points
-    forms a degenerate triangle, the constraint asserts that all triangles formed by any combination
-    of three points must have a non-zero area.
+    The second set of constraints asserts that no three points are colinear by
+    calculating the area formed by the triangles of every combination of points
+    in the grid. Since three colinear points forms a degenerate triangle, the
+    constraint asserts that all triangles formed by any combination of three
+    points must have a non-zero area.
 
     Args:
         N: the dimensions (number of rows and columns) of the grid.
 
     Returns:
-        A z3 solver populated with the constraints if it is satisfiable, or None if it is
-        unsatisfiable.
+        A z3 solver populated with the constraints if it is satisfiable, or None
+        if it is unsatisfiable.
     """
 
     solver = Solver()
@@ -195,8 +203,9 @@ def z3_nothree_solve(N):
     #                                 [ [ 1,  1,  1],
     #  A(p1, p2, p3) = 1/2 * Abs(Det(   [x1, x2, x3],  ))
     #                                   [y1, y2, y3] ]
-    # (See derivation here https://people.richland.edu/james/lecture/m116/matrices/area.html)
-    # so to assert that no three points are colinear, assert that the det of the matrix is not 0
+    # (https://people.richland.edu/james/lecture/m116/matrices/area.html)
+    # so to assert that no three points are colinear, assert that the det of the
+    # matrix is not 0
     for triplet in points_indices:
         p1 = triplet[0]
         p2 = triplet[1]
@@ -207,8 +216,8 @@ def z3_nothree_solve(N):
         y2 = Int("y_{0}".format(p2))
         x3 = Int("x_{0}".format(p3))
         y3 = Int("y_{0}".format(p3))
-        # calculate the determinant of the matrix above -- no need to halve the absolute value
-        # since we are just checking that the result is not equal to 0
+        # calculate the determinant of the matrix above -- no need to halve the
+        # absolute value since we are just checking that the result is not 0
         solver.add(
             0
             != (
@@ -231,9 +240,11 @@ def no_three_in_a_line(N):
         N: the dimensions (number of rows and columns) of the grid.
 
     Returns:
-        A tuple of (float, Grid) containing the solution to the no-three-in-a-line problem, along
-        with the time in seconds finding the solution.
-        Or, if the solver is unable to find a solution, a tuple of (float, None) is returned.
+        A tuple of (float, Grid) containing the solution to the no-three-in-a-
+        line problem, along with the time in seconds finding the solution.
+
+        Or, if the solver is unable to find a solution, a tuple of (float, None)
+        is returned.
     """
     time_start = perf_counter()
     solution = z3_nothree_solve(N)
@@ -246,23 +257,26 @@ def no_three_in_a_line(N):
 def is_valid(grid):
     """Checks that no three points in the grid are colinear.
 
-    This function checks the line equations given by every combination of points to ensure that no
-    two equations are duplicated (i.e., for any two lines, they either differ in slope or offset).
-    Since vertical lines have undefined slopes, they are handled separately: each column is simply
-    checked to assert that no column contains more than two points.
+    This function checks the line equations given by every combination of points
+    to ensure that no two equations are duplicated (i.e., for any two lines,
+    they either differ in slope or offset). Since vertical lines have undefined
+    slopes, they are handled separately: each column is simply checked to assert
+    that no column contains more than two points.
 
     Args:
         grid: an N*N instance of a Grid.
 
     Returns:
-        True if there are no three colinear points, or False if there are any three colinear points.
+        True if there are no three colinear points, or False if there are any
+        three colinear points.
     """
     # make sure no more than 2 points are in each vertical column
     for column in grid.columns():
         if len(column) > 2:
             return False
 
-    # every 2 points should form a unique line equation (not counting vertical lines)
+    # every 2 points should form a unique line equation
+    # (not counting vertical lines)
     lines = {None}
     for points_tuple in combinations(grid.points(), 2):
         p1 = points_tuple[0]
@@ -290,7 +304,8 @@ def is_valid(grid):
 
 
 def solve_and_print_up_to(N):
-    """Solves the no-three-in-a-line problem for 2 up to N and writes the results to solutions.txt.
+    """Solves the no-three-in-a-line problem for 2 up to N and writes the
+    results to solutions.txt.
 
     Args:
         N: the dimensions (number of rows and columns) of the grid.
@@ -324,7 +339,8 @@ def solve_and_print_up_to(N):
 
 
 def solve_one(n):
-    """Solves a single instance of the no-three-in-a-line problem and prints the results.
+    """Solves a single instance of the no-three-in-a-line problem and prints the
+    results.
 
     Args:
         n: the size of the grid.
