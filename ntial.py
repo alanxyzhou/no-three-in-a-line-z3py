@@ -300,26 +300,6 @@ def is_valid(grid):
 
     return True
 
-
-def naive(N):
-    """Naively attempts to brute-force the no-three-in-a-line problem.
-
-    Naively calculates the maximum number of pieces that can be placed on a board of size NxN
-    such that no 3 pieces are colinear. This is O(2^N), since every possible placement (piece or
-    no piece) is tested.
-
-    This only serves as a reference to see how long this approach would take compared to
-    using the smt solver.
-
-    Args:
-        N: the dimensions (number of rows and columns) of the grid.
-
-    Returns:
-        TODO
-    """
-    return False
-
-
 def solve_and_print_up_to(N):
     """Solves the no-three-in-a-line problem for 2 up to N and writes the results to solutions.txt.
 
