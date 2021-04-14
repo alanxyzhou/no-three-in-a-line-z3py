@@ -7,4 +7,4 @@ Install z3py with pip (recommended to do in a virtual environment):
 
 Run with the desired N (recommended no larger than 8):
 
-py ntial.py <N>
+``` py ntial.py <N> ```
