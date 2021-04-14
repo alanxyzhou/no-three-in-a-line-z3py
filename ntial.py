@@ -2,12 +2,6 @@ from z3 import *
 from itertools import combinations
 from time import perf_counter
 
-# Board: NxN grid with 0 for no piece, 1 for a piece
-# Constraints: No three pieces may be colinear
-# i.e., for any points ([x1, y1], [x2, y2]), board([m(x2-x1) + x1], [m(y2-y1) + y1]) == 0 for all m.
-
-# a board is represented by a
-
 
 class Grid:
     """Class for representing an NxN grid."""
@@ -110,9 +104,6 @@ class Grid:
             for col in range(self.N):
                 line += "1" if self.grid[row][col] else "0"
             queue.insert(0, line)
-        # construct in reverse order so positive y is up instead of down
-        # while len(stack) > 0:
-        #    print(stack.pop())
         return "\n".join(queue)
 
     def print(self):
@@ -206,7 +197,6 @@ def z3_nothree_solve(N):
     #                                   [y1, y2, y3] ]
     # (See derivation here https://people.richland.edu/james/lecture/m116/matrices/area.html)
     # so to assert that no three points are colinear, assert that the det of the matrix is not 0
-    # equivalently: https://en.wikipedia.org/wiki/Shoelace_formula
     for triplet in points_indices:
         p1 = triplet[0]
         p2 = triplet[1]
@@ -228,9 +218,7 @@ def z3_nothree_solve(N):
             )
         )
 
-    # print(solver.assertions())
     if solver.check() == sat:
-        # print(solver.model())
         return solver
     else:
         return None
@@ -299,6 +287,7 @@ def is_valid(grid):
             lines.add(line)
 
     return True
+
 
 def solve_and_print_up_to(N):
     """Solves the no-three-in-a-line problem for 2 up to N and writes the results to solutions.txt.
