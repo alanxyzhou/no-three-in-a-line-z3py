@@ -177,7 +177,6 @@ def z3_nothree_solve(N):
     for i in range(2 * N):
         x_i = Int("x_{0}".format(i))
         y_i = Int("y_{0}".format(i))
-        tup = (x_i, y_i)
         # assert that every point is in the grid
         solver.add(And(x_i >= 0, x_i < N))
         solver.add(And(y_i >= 0, y_i < N))
@@ -321,7 +320,7 @@ def naive(N):
     return False
 
 
-def main(N):
+def solve_and_print_up_to(N):
     """Solves the no-three-in-a-line problem for 2 up to N and writes the results to solutions.txt.
 
     Args:
@@ -355,9 +354,19 @@ def main(N):
     f.close()
 
 
+def solve_one(n):
+    t, s = no_three_in_a_line(n)
+    if s is None:
+        print("No solution found for N=" + str(n) + "\n")
+    else:
+        grid = construct_grid_from_model(n, s)
+        grid.print()
+        print("N=" + str(n) + ", t=" + str(t) + "s\n\n")
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python3", sys.argv[0], "[N]")
         exit()
 
-    main(int(sys.argv[1]))
+    solve_one(int(sys.argv[1]))
