@@ -355,6 +355,11 @@ def solve_and_print_up_to(N):
 
 
 def solve_one(n):
+    """Solves a single instance of the no-three-in-a-line problem and prints the results.
+
+    Args:
+        n: the size of the grid.
+    """
     t, s = no_three_in_a_line(n)
     if s is None:
         print("No solution found for N=" + str(n) + "\n")
