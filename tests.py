@@ -92,14 +92,63 @@ class TestIsValid(unittest.TestCase):
         g = Grid(3, "001010100")
         self.assertFalse(is_valid(g))
 
+    def test_invalid_steep_slope_5x5(self):
+        g = Grid(5, "0010000000010000000010000")
+        self.assertFalse(is_valid(g))
 
-# is_valid tests ===============================================================
+    def test_invalid_shallow_slope_5x5(self):
+        g = Grid(5, "1000000100000010000000000")
+        self.assertFalse(is_valid(g))
 
 
-# Solver validity tests ========================================================
+class TestConstructGridFromModel(unittest.TestCase):
+    def test_construct_3x3_solution_from_model(self):
+        # only two valid 3x3 solutions exist
+        s1 = "110\n101\n011"
+        s2 = "011\n101\n110"
+        solver = z3_nothree_solve(3)
+        self.assertEqual(solver.check(), sat)
+        g = construct_grid_from_model(3, solver)
+        self.assertTrue(g.as_string() == s1 or g.as_string() == s2)
+
+    def test_unsat_model_retuns_none(self):
+        dummy = Solver()
+        dummy_var = Int("x")
+        dummy.add(And(dummy_var < 0, dummy_var > 0))
+        res = construct_grid_from_model(5, dummy)
+        self.assertIsNone(res)
+
+    def test_too_small_n_throws(self):
+        s = Solver()
+        try:
+            construct_grid_from_model(1, s)
+            self.assertTrue(False)
+        except:
+            self.assertTrue(True)
+
+    def test_not_int_throws(self):
+        s = Solver()
+        try:
+            construct_grid_from_model(3.14, s)
+            self.assertTrue(False)
+        except:
+            self.assertTrue(True)
+
+    def test_not_solver_throws(self):
+        try:
+            construct_grid_from_model(3, None)
+            self.assertTrue(False)
+        except:
+            self.assertTrue(True)
 
 
-################################################################################
+class TestSolverProducesValidSolutions(unittest.TestCase):
+    def test_z3_produces_valid_solutions(self):
+        for i in range(2, 6):
+            solver = z3_nothree_solve(i)
+            grid = construct_grid_from_model(i, solver)
+            self.assertTrue(is_valid(grid))
+
 
 if __name__ == "__main__":
     unittest.main()

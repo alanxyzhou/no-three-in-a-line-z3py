@@ -129,7 +129,18 @@ def construct_grid_from_model(N, solver):
     Returns:
         A grid if the constraints are satisfiable, or None if the constraints
         are unsatisfiable.
+
+    Raises:
+        TypeError: N is not an integer, or solver is not a Solver
+        ValueError: N is smaller than 2
     """
+    if not isinstance(N, int):
+        raise TypeError("N must be an integer")
+    if not isinstance(solver, Solver):
+        raise TypeError("provided solver is not z3 solver type")
+    if N < 2:
+        raise ValueError("N must be at least 2")
+
     if solver.check() == sat:
         m = solver.model()
         grid_string_list = ["0" for i in range(N * N)]
@@ -142,7 +153,6 @@ def construct_grid_from_model(N, solver):
             grid_string_list[yval * N + xval] = "1"
         return Grid(N, "".join(grid_string_list))
     else:
-        print("solver returned unsat, cannot create grid")
         return None
 
 
@@ -272,7 +282,13 @@ def is_valid(grid):
     Returns:
         True if there are no three colinear points, or False if there are any
         three colinear points.
+
+    Raises:
+        TypeError: if grid is not a Grid
     """
+    if not isinstance(grid, Grid):
+        raise TypeError("provided grid is not a Grid object")
+
     # make sure no more than 2 points are in each vertical column
     for column in grid.columns():
         if len(column) > 2:
@@ -306,7 +322,7 @@ def is_valid(grid):
     return True
 
 
-def solve_and_print_up_to(N):
+def solve_and_write_up_to(N):
     """Solves the no-three-in-a-line problem for 2 up to N and writes the
     results to solutions.txt.
 
@@ -318,12 +334,12 @@ def solve_and_print_up_to(N):
 
     Raises:
         TypeError: if N is not an integer
-        ValueError: if N is not positive
+        ValueError: if N is not positive and greater than or equal to 2
     """
     if not isinstance(N, int):
         raise TypeError("N must be an integer")
-    if N <= 0:
-        raise ValueError("N must be positive")
+    if N <= 2:
+        raise ValueError("N must be at least 2")
 
     f = open("solutions.txt", "a")
 
@@ -341,13 +357,51 @@ def solve_and_print_up_to(N):
     f.close()
 
 
+def solve_and_print_up_to(N):
+    """Solves the no-three-in-a-line problem for 2 up to N and prints the
+    solutions to console.
+
+    This is function is used for the presentation demo.
+
+    Args:
+        N: the dimensions (number of rows and columns) of the grid.
+
+    Returns:
+        None
+
+    Raises:
+        TypeError: if N is not an integer
+        ValueError: if N is not positive and greater than or equal to 2
+    """
+    if not isinstance(N, int):
+        raise TypeError("N must be an integer")
+    if N <= 2:
+        raise ValueError("N must be at least 2")
+
+    for n in range(2, N + 1):
+        t, s = no_three_in_a_line(n)
+        assert s is not None
+        grid = construct_grid_from_model(n, s)
+        grid.print()
+        print("N=" + str(n) + ", t=" + str(t) + "s\n\n")
+
+
 def solve_one(n):
     """Solves a single instance of the no-three-in-a-line problem and prints the
     results.
 
     Args:
         n: the size of the grid.
+
+    Raises:
+        TypeError: if N is not an integer
+        ValueError: if N is not positive and greater than or equal to 2
     """
+    if not isinstance(n, int):
+        raise TypeError("N must be an integer")
+    if n <= 2:
+        raise ValueError("N must be at least 2")
+
     t, s = no_three_in_a_line(n)
     if s is None:
         print("No solution found for N=" + str(n) + "\n")
@@ -359,7 +413,12 @@ def solve_one(n):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3", sys.argv[0], "[N]")
+        print("Usage: python3", sys.argv[0], "<N>")
+        print(
+            "    N must be a positive integer "
+            + "(at least 2 and recommended no larger than 8)"
+        )
         exit()
 
-    solve_one(int(sys.argv[1]))
+    # solve_one(int(sys.argv[1]))
+    solve_and_print_up_to(int(sys.argv[1]))
