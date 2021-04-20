@@ -24,8 +24,11 @@ class Grid:
 
         Raises:
             ValueError: a syntax errror prevented the grid from being
-            constructed by the instance.
+            constructed by the instance, or if N is less than 2.
         """
+        if N < 2:
+            raise ValueError("N must be >= 2")
+
         self.N = N
         self.grid = [[False for col in range(N)] for row in range(N)]
 
