@@ -7,7 +7,7 @@ This code does not feature any optimizations for symmetry, so the largest value 
 
 A list of solutions (drawn in ASCII) that were obtained from this code can be seen in solutions.txt.  
 
-## Installation and run instructions:
+## Instructions:
 Install z3py with pip (recommended to do so in a virtual environment, see https://docs.python.org/3/library/venv.html for instructions):
 ``` pip install z3-solver ```
 
