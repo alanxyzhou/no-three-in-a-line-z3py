@@ -1,7 +1,7 @@
 # no-three-in-a-line-z3py
 ## CS2800 Spring 2021 - Final Project 
 
-This is a project which aims to find solutions to the [No Three in a Line problem](https://en.wikipedia.org/wiki/No-three-in-line_problem) through SMT reduction. The aim of this project is to demonstrate how SMT reduction (through the Z3Py library) can be used to produce solutions which contain the maximum number of *2n* points for small values of *n*. For this reason, the constraints are hard-coded to look for solutions which contain exactly *2n* points, even though the current known asymptotic upper bound is (1-eps)n.
+This is a project which aims to find solutions to the [No Three in a Line problem](https://en.wikipedia.org/wiki/No-three-in-line_problem) through SMT reduction. The aim of this project is to demonstrate how SMT reduction (through the Z3Py library) can be used to produce solutions which contain the maximum number of *2n* points for small values of *n*. For this reason, the constraints are hard-coded to look for solutions which contain exactly *2n* points, even though the current known asymptotic upper bound is 3pi/n.
 
 This code does not feature any optimizations for symmetry, so the largest value of *n* that can be calculated before the exponential runtime grows beyond reasonable limits is n=8. For reference, the largest value of *n* where solutions of *2n* points is known for is n=46.
 
